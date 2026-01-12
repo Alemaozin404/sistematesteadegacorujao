@@ -23,7 +23,7 @@
         .img-container img { max-height: 80%; transition: 0.5s; object-fit: contain; }
         .premium-card:hover .img-container img { transform: scale(1.1); }
 
-        .modal-overlay { backdrop-filter: blur(12px); transition: 0.3s; background: rgba(0,0,0,0.8); }
+        .modal-overlay { backdrop-filter: blur(12px); transition: 0.3s; background: rgba(0,0,0,0.8); z-index: 100; }
         .modal-content { transform: scale(0.9); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .modal-active .modal-content { transform: scale(1); }
 
@@ -117,7 +117,7 @@
         </div>
     </aside>
 
-    <div id="product-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+    <div id="product-modal" class="fixed inset-0 hidden modal-overlay flex items-center justify-center p-4">
         <div class="modal-content bg-[#111] border border-zinc-800 w-full max-w-lg rounded-[2.5rem] p-8">
             <h2 id="modal-title" class="text-3xl font-luxury gold-gradient mb-8 text-center">Novo Item</h2>
             <div class="space-y-4">
@@ -165,7 +165,7 @@
         </div>
     </div>
 
-    <div id="receipt-modal" class="fixed inset-0 z-[60] hidden modal-overlay flex items-center justify-center p-4">
+    <div id="receipt-modal" class="fixed inset-0 hidden modal-overlay flex items-center justify-center p-4">
         <div class="modal-content bg-[#0a0a0a] border border-green-500/30 w-full max-w-md rounded-[2.5rem] p-10 text-center">
             <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6"><span>✅</span></div>
             <h3 class="text-2xl font-luxury text-green-500 mb-2">Venda Confirmada!</h3>
@@ -182,6 +182,20 @@
                 </div>
             </div>
             <button onclick="ui.closeReceipt()" class="w-full bg-zinc-900 border border-zinc-800 text-white py-5 rounded-2xl font-black uppercase text-xs hover:bg-zinc-800 transition">Fechar Resumo</button>
+        </div>
+    </div>
+
+    <div id="edit-pay-modal" class="fixed inset-0 hidden modal-overlay flex items-center justify-center p-4">
+        <div class="modal-content bg-[#111] border border-zinc-800 w-full max-w-sm rounded-[2rem] p-8">
+            <h2 class="text-xl font-luxury gold-gradient mb-6 text-center">Alterar Pagamento</h2>
+            <input type="hidden" id="edit-pay-venda-id">
+            <div class="space-y-3">
+                <button onclick="vendaSystem.updatePaymentMethod('Pix')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Pix</button>
+                <button onclick="vendaSystem.updatePaymentMethod('Dinheiro')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Dinheiro</button>
+                <button onclick="vendaSystem.updatePaymentMethod('Cartão (Débito)')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Cartão (Débito)</button>
+                <button onclick="vendaSystem.updatePaymentMethod('Cartão (Crédito)')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Cartão (Crédito)</button>
+            </div>
+            <button onclick="ui.closeEditPayModal()" class="w-full mt-6 text-zinc-600 text-[10px] font-black uppercase tracking-widest">Cancelar</button>
         </div>
     </div>
 
@@ -279,8 +293,6 @@
 
             render() {
                 const grid = document.getElementById('inventory-grid');
-                
-                // Filtro duplo: Categoria + Pesquisa por nome
                 const filtered = this.db.filter(item => {
                     const matchesCat = currentFilter === "TUDO" || item.cat === currentFilter;
                     const matchesSearch = item.nome.toLowerCase().includes(searchQuery);
@@ -317,7 +329,7 @@
             
             async init() {
                 db.collection("vendas").orderBy("id", "desc").limit(50).onSnapshot(snap => {
-                    this.history = snap.docs.map(doc => doc.data());
+                    this.history = snap.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
                     if(!document.getElementById('section-historico').classList.contains('hidden')) ui.renderHistory();
                 });
             },
@@ -407,6 +419,20 @@
                 this.carrinho = [];
                 this.renderCart();
                 this.setPay('Pix');
+            },
+
+            // Sistema de Edição de Pagamento do Histórico
+            async updatePaymentMethod(novoMetodo) {
+                const docId = document.getElementById('edit-pay-venda-id').value;
+                if(!docId) return;
+
+                try {
+                    await db.collection("vendas").doc(docId).update({ metodo: novoMetodo });
+                    ui.closeEditPayModal();
+                } catch (e) {
+                    console.error("Erro ao atualizar pagamento:", e);
+                    alert("Erro ao atualizar.");
+                }
             }
         };
 
@@ -435,7 +461,9 @@
                         <div class="gaveta-content space-y-3">
                             ${vendas.map(v => `<div class="border-b border-zinc-900 pb-2">
                                 <div class="flex justify-between text-[10px] font-black mb-1">
-                                    <span class="text-zinc-500 uppercase">${v.hora} | ${v.metodo}</span>
+                                    <span class="text-zinc-500 uppercase">
+                                        ${v.hora} | <span class="text-white cursor-pointer hover:underline" onclick="ui.openEditPayModal('${v.docId}')">${v.metodo} ✏️</span>
+                                    </span>
                                     <span class="text-[#d4af37]">R$ ${v.total.toFixed(2)}</span>
                                 </div>
                                 <div class="text-[9px] text-zinc-400 pl-2">
@@ -484,6 +512,19 @@
 
             closeReceipt() {
                 const modal = document.getElementById('receipt-modal');
+                modal.classList.remove('modal-active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            },
+
+            openEditPayModal(docId) {
+                document.getElementById('edit-pay-venda-id').value = docId;
+                const modal = document.getElementById('edit-pay-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('modal-active'), 10);
+            },
+
+            closeEditPayModal() {
+                const modal = document.getElementById('edit-pay-modal');
                 modal.classList.remove('modal-active');
                 setTimeout(() => modal.classList.add('hidden'), 300);
             }
