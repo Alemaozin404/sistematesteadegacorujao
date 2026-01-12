@@ -27,7 +27,7 @@
         .modal-content { transform: scale(0.9); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .modal-active .modal-content { transform: scale(1); }
 
-        .tab-btn { padding: 14px 28px; border-radius: 18px; font-size: 11px; font-weight: 900; text-transform: uppercase; background: #111; border: 2px solid #222; color: #666; transition: 0.3s; white-space: nowrap; }
+        .tab-btn { padding: 12px 20px; border-radius: 14px; font-size: 10px; font-weight: 900; text-transform: uppercase; background: #111; border: 2px solid #222; color: #666; transition: 0.3s; white-space: nowrap; }
         .tab-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1a1a; }
         
         .search-input { background: #111; border: 1px solid #222; border-radius: 15px; padding: 12px 20px; color: white; width: 100%; outline: none; transition: 0.3s; }
@@ -42,6 +42,11 @@
         .gaveta-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #111; }
         .gaveta-content { display: none; padding: 15px; border-top: 1px solid #222; }
         
+        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+        .status-pendente { background: #facc15; color: #000; }
+        .status-preparando { background: #3b82f6; color: #fff; }
+        .status-entregue { background: #22c55e; color: #fff; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -55,7 +60,8 @@
                 <h1 class="text-5xl font-luxury gold-gradient tracking-tighter">Adega Corujão</h1>
                 <div class="flex gap-6 mt-6">
                     <button onclick="ui.mainTab('estoque')" id="btn-estoque" class="text-[#d4af37] text-sm font-black uppercase border-b-4 border-[#d4af37] pb-2">Inventário</button>
-                    <button onclick="ui.mainTab('historico')" id="btn-historico" class="text-zinc-600 text-sm font-black uppercase pb-2">Histórico</button>
+                    <button onclick="ui.mainTab('pedidos')" id="btn-pedidos" class="text-zinc-600 text-sm font-black uppercase pb-2">Pedidos</button>
+                    <button onclick="ui.mainTab('historico')" id="btn-historico" class="text-zinc-600 text-sm font-black uppercase pb-2">Histórico Vendas</button>
                 </div>
             </div>
             
@@ -85,13 +91,22 @@
             <div id="inventory-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"></div>
         </div>
 
+        <div id="section-pedidos" class="hidden">
+            <div class="flex gap-4 mb-8">
+                <button onclick="vendaSystem.filterPedidos('PENDENTE')" id="tab-p-pendente" class="tab-btn active">Pendentes</button>
+                <button onclick="vendaSystem.filterPedidos('PREPARANDO')" id="tab-p-preparando" class="tab-btn">Preparando</button>
+                <button onclick="vendaSystem.filterPedidos('ENTREGUE')" id="tab-p-entregue" class="tab-btn">Entregues</button>
+            </div>
+            <div id="pedidos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
         <div id="section-historico" class="hidden">
             <div id="gavetas-container" class="max-w-4xl space-y-4"></div>
         </div>
     </main>
 
     <aside class="w-full lg:w-[450px] bg-[#080808] border-l border-zinc-900 flex flex-col p-10 sticky top-0 h-screen">
-        <h2 class="text-2xl font-luxury mb-8">Pedido</h2>
+        <h2 class="text-2xl font-luxury mb-8">Carrinho</h2>
         <div id="cart-items" class="flex-1 overflow-y-auto space-y-4"></div>
         
         <div class="mt-6 border-t border-zinc-900 pt-6">
@@ -153,8 +168,8 @@
                         <input type="number" id="p-desconto" placeholder="Opcional" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 mt-1 outline-none text-red-500">
                     </div>
                     <div class="col-span-2">
-                        <label class="text-[10px] font-bold text-zinc-500 uppercase ml-2">URL da Imagem (Link Direto)</label>
-                        <input type="text" id="p-img" placeholder="Cole o link do ImgBB aqui" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 mt-1 outline-none focus:border-[#d4af37]">
+                        <label class="text-[10px] font-bold text-zinc-500 uppercase ml-2">URL da Imagem</label>
+                        <input type="text" id="p-img" placeholder="URL da imagem" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 mt-1 outline-none focus:border-[#d4af37]">
                     </div>
                 </div>
                 <div class="flex gap-4 mt-8">
@@ -168,7 +183,7 @@
     <div id="receipt-modal" class="fixed inset-0 hidden modal-overlay flex items-center justify-center p-4">
         <div class="modal-content bg-[#0a0a0a] border border-green-500/30 w-full max-w-md rounded-[2.5rem] p-10 text-center">
             <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6"><span>✅</span></div>
-            <h3 class="text-2xl font-luxury text-green-500 mb-2">Venda Confirmada!</h3>
+            <h3 class="text-2xl font-luxury text-green-500 mb-2">Pedido Criado!</h3>
             <p id="rec-metodo" class="text-[10px] font-black uppercase text-zinc-500 tracking-widest mb-8"></p>
             <div id="rec-list" class="space-y-3 mb-8 text-left max-h-40 overflow-y-auto pr-2"></div>
             <div class="border-t border-zinc-800 pt-6 mb-8 flex justify-between items-center">
@@ -200,6 +215,7 @@
     </div>
 
     <script>
+        // Configuração Firebase (Sua configuração original mantida)
         const firebaseConfig = {
             apiKey: "AIzaSyA_AFJL8gwdcidtisa8hoN7l6imJynCGFc",
             authDomain: "adega-corujao.firebaseapp.com",
@@ -213,6 +229,7 @@
         const db = firebase.firestore();
 
         let currentFilter = "TUDO";
+        let currentStatusFilter = "PENDENTE";
         let searchQuery = "";
         let selectedPay = "Pix";
         let selectedCardType = "";
@@ -220,19 +237,16 @@
 
         const inventory = {
             db: [],
-            
             async init() {
                 db.collection("produtos").onSnapshot((snapshot) => {
                     this.db = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
                     this.render();
                 });
             },
-
             async saveProduct() {
                 const id = document.getElementById('edit-id').value;
                 const pVenda = parseFloat(document.getElementById('p-venda').value) || 0;
                 const desc = parseFloat(document.getElementById('p-desconto').value) || 0;
-                
                 const data = {
                     nome: document.getElementById('p-nome').value,
                     cat: document.getElementById('p-cat').value,
@@ -242,13 +256,10 @@
                     temDesconto: desc > 0,
                     imagem: document.getElementById('p-img').value || 'https://via.placeholder.com/150'
                 };
-
                 if(id) await db.collection("produtos").doc(id).update(data);
                 else await db.collection("produtos").add(data);
-
                 ui.closeProductModal();
             },
-
             toggleDeleteMode() {
                 editMode = !editMode;
                 const btn = document.getElementById('btn-toggle-delete');
@@ -257,13 +268,9 @@
                 btn.classList.toggle('text-white', editMode);
                 this.render();
             },
-
             async apagar(id) {
-                if(confirm("Deseja deletar este item permanentemente?")) {
-                    await db.collection("produtos").doc(id).delete();
-                }
+                if(confirm("Deseja deletar este item permanentemente?")) await db.collection("produtos").doc(id).delete();
             },
-
             editItem(id) {
                 const p = this.db.find(x => x.id === id);
                 document.getElementById('edit-id').value = p.id;
@@ -276,21 +283,15 @@
                 document.getElementById('modal-title').innerText = "Editar Produto";
                 ui.openProductModal();
             },
-
             filter(cat) {
                 currentFilter = cat;
-                document.querySelectorAll('.tab-btn').forEach(b => {
+                document.querySelectorAll('#category-tabs .tab-btn').forEach(b => {
                     const btnText = b.innerText.toLowerCase();
                     b.classList.toggle('active', btnText === cat.toLowerCase() || (cat === 'TUDO' && btnText === 'tudo'));
                 });
                 this.render();
             },
-
-            search(val) {
-                searchQuery = val.toLowerCase();
-                this.render();
-            },
-
+            search(val) { searchQuery = val.toLowerCase(); this.render(); },
             render() {
                 const grid = document.getElementById('inventory-grid');
                 const filtered = this.db.filter(item => {
@@ -298,7 +299,6 @@
                     const matchesSearch = item.nome.toLowerCase().includes(searchQuery);
                     return matchesCat && matchesSearch;
                 });
-
                 grid.innerHTML = filtered.map(item => `
                     <div class="premium-card" onclick="${editMode ? `inventory.editItem('${item.id}')` : `vendaSystem.adicionar('${item.id}')`}">
                         ${editMode ? `<button onclick="event.stopPropagation(); inventory.apagar('${item.id}')" class="absolute -top-2 -left-2 bg-red-500 w-10 h-10 rounded-full z-30 shadow-xl flex items-center justify-center">🗑️</button>` : ''}
@@ -328,8 +328,9 @@
             history: [],
             
             async init() {
-                db.collection("vendas").orderBy("id", "desc").limit(50).onSnapshot(snap => {
+                db.collection("vendas").orderBy("id", "desc").onSnapshot(snap => {
                     this.history = snap.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
+                    this.renderPedidos();
                     if(!document.getElementById('section-historico').classList.contains('hidden')) ui.renderHistory();
                 });
             },
@@ -347,16 +348,11 @@
             },
 
             adicionar(id) {
-                if(editMode) return;
                 const p = inventory.db.find(x => x.id === id);
                 if(!p || p.qtd <= 0) return;
-                
                 const itemNoCarrinho = this.carrinho.find(i => i.id === id);
-                if(itemNoCarrinho) {
-                    if(itemNoCarrinho.qV < p.qtd) itemNoCarrinho.qV++;
-                } else {
-                    this.carrinho.push({id: p.id, nome: p.nome, preco: p.temDesconto ? p.promo : p.venda, qV: 1});
-                }
+                if(itemNoCarrinho) { if(itemNoCarrinho.qV < p.qtd) itemNoCarrinho.qV++; }
+                else { this.carrinho.push({id: p.id, nome: p.nome, preco: p.temDesconto ? p.promo : p.venda, qV: 1}); }
                 this.renderCart();
             },
 
@@ -373,10 +369,7 @@
                 cont.innerHTML = this.carrinho.map(i => {
                     total += (i.preco * i.qV);
                     return `<div class="flex items-center gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
-                        <div class="flex-1">
-                            <p class="text-[10px] font-black uppercase text-white">${i.nome}</p>
-                            <p class="text-[9px] text-zinc-500 font-bold">R$ ${i.preco.toFixed(2)}</p>
-                        </div>
+                        <div class="flex-1"><p class="text-[10px] font-black uppercase text-white">${i.nome}</p><p class="text-[9px] text-zinc-500">R$ ${i.preco.toFixed(2)}</p></div>
                         <div class="flex items-center gap-3">
                             <button onclick="vendaSystem.remover('${i.id}')" class="w-8 h-8 bg-zinc-800 rounded-lg">-</button>
                             <span class="text-xs font-black w-4 text-center">${i.qV}</span>
@@ -401,55 +394,85 @@
                     hora: agora.toLocaleTimeString('pt-BR'),
                     metodo: selectedPay === 'Cartão' ? `Cartão (${selectedCardType})` : selectedPay,
                     total: totalFinal,
+                    status: "PENDENTE",
                     itens: [...this.carrinho]
                 };
 
                 await db.collection("vendas").add(venda);
-                
                 for(const item of this.carrinho) {
                     const ref = db.collection("produtos").doc(item.id);
                     await db.runTransaction(async (t) => {
                         const doc = await t.get(ref);
-                        const novaQtd = doc.data().qtd - item.qV;
-                        t.update(ref, { qtd: novaQtd });
+                        t.update(ref, { qtd: doc.data().qtd - item.qV });
                     });
                 }
-                
                 ui.showReceipt(venda, totalFinal, qtdTotal);
                 this.carrinho = [];
                 this.renderCart();
                 this.setPay('Pix');
             },
 
-            // Sistema de Edição de Pagamento do Histórico
+            filterPedidos(status) {
+                currentStatusFilter = status;
+                document.querySelectorAll('#section-pedidos .tab-btn').forEach(b => {
+                    b.classList.toggle('active', b.id === `tab-p-${status.toLowerCase()}`);
+                });
+                this.renderPedidos();
+            },
+
+            async updateStatus(docId, novoStatus) {
+                await db.collection("vendas").doc(docId).update({ status: novoStatus });
+            },
+
+            renderPedidos() {
+                const grid = document.getElementById('pedidos-grid');
+                const filtrados = this.history.filter(v => v.status === currentStatusFilter);
+                
+                grid.innerHTML = filtrados.map(v => `
+                    <div class="bg-[#111] border border-zinc-800 p-6 rounded-[2rem]">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-[10px] font-black text-zinc-500 uppercase">${v.hora} - ${v.metodo}</p>
+                                <h4 class="text-xl font-black text-white">Pedido #${String(v.id).slice(-4)}</h4>
+                            </div>
+                            <span class="status-badge status-${v.status.toLowerCase()}">${v.status}</span>
+                        </div>
+                        <div class="space-y-2 mb-6">
+                            ${v.itens.map(it => `<p class="text-xs text-zinc-400 font-bold">${it.qV}x ${it.nome}</p>`).join('')}
+                        </div>
+                        <div class="flex gap-2">
+                            ${v.status === 'PENDENTE' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'PREPARANDO')" class="flex-1 bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase">Iniciar Preparo</button>` : ''}
+                            ${v.status === 'PREPARANDO' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'ENTREGUE')" class="flex-1 bg-green-600 py-3 rounded-xl text-[10px] font-black uppercase">Marcar como Entregue</button>` : ''}
+                            ${v.status === 'ENTREGUE' ? `<p class="text-[10px] text-zinc-600 font-black uppercase">Finalizado ✅</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            },
+
             async updatePaymentMethod(novoMetodo) {
                 const docId = document.getElementById('edit-pay-venda-id').value;
-                if(!docId) return;
-
-                try {
-                    await db.collection("vendas").doc(docId).update({ metodo: novoMetodo });
-                    ui.closeEditPayModal();
-                } catch (e) {
-                    console.error("Erro ao atualizar pagamento:", e);
-                    alert("Erro ao atualizar.");
-                }
+                await db.collection("vendas").doc(docId).update({ metodo: novoMetodo });
+                ui.closeEditPayModal();
             }
         };
 
         const ui = {
             mainTab(t) {
                 document.getElementById('section-inventory').classList.toggle('hidden', t !== 'estoque');
+                document.getElementById('section-pedidos').classList.toggle('hidden', t !== 'pedidos');
                 document.getElementById('section-historico').classList.toggle('hidden', t !== 'historico');
+                
                 document.getElementById('btn-estoque').classList.toggle('border-b-4', t === 'estoque');
+                document.getElementById('btn-pedidos').classList.toggle('border-b-4', t === 'pedidos');
                 document.getElementById('btn-historico').classList.toggle('border-b-4', t === 'historico');
+                
                 if(t === 'historico') this.renderHistory();
+                if(t === 'pedidos') vendaSystem.renderPedidos();
             },
-
             renderHistory() {
                 const cont = document.getElementById('gavetas-container');
                 const grupos = {};
                 vendaSystem.history.forEach(v => { if(!grupos[v.dia]) grupos[v.dia] = []; grupos[v.dia].push(v); });
-                
                 cont.innerHTML = Object.keys(grupos).map(dia => {
                     const vendas = grupos[dia];
                     const totalDia = vendas.reduce((a, b) => a + b.total, 0);
@@ -461,73 +484,29 @@
                         <div class="gaveta-content space-y-3">
                             ${vendas.map(v => `<div class="border-b border-zinc-900 pb-2">
                                 <div class="flex justify-between text-[10px] font-black mb-1">
-                                    <span class="text-zinc-500 uppercase">
-                                        ${v.hora} | <span class="text-white cursor-pointer hover:underline" onclick="ui.openEditPayModal('${v.docId}')">${v.metodo} ✏️</span>
-                                    </span>
+                                    <span class="text-zinc-500 uppercase">${v.hora} | <span class="text-white cursor-pointer" onclick="ui.openEditPayModal('${v.docId}')">${v.metodo} ✏️</span></span>
                                     <span class="text-[#d4af37]">R$ ${v.total.toFixed(2)}</span>
                                 </div>
-                                <div class="text-[9px] text-zinc-400 pl-2">
-                                    ${v.itens.map(it => `${it.qV}x ${it.nome}`).join(' | ')}
-                                </div>
+                                <div class="text-[9px] text-zinc-400 pl-2">${v.itens.map(it => `${it.qV}x ${it.nome}`).join(' | ')}</div>
                             </div>`).join('')}
                         </div>
                     </div>`;
                 }).join('');
             },
-
-            toggleG(h) {
-                const c = h.nextElementSibling;
-                c.style.display = (c.style.display === 'block') ? 'none' : 'block';
-            },
-
-            openProductModal() {
-                document.getElementById('product-modal').classList.remove('hidden');
-                setTimeout(() => document.getElementById('product-modal').classList.add('modal-active'), 10);
-            },
-
-            closeProductModal() {
-                document.getElementById('product-modal').classList.remove('modal-active');
-                setTimeout(() => {
-                    document.getElementById('product-modal').classList.add('hidden');
-                    document.getElementById('edit-id').value = '';
-                    document.getElementById('modal-title').innerText = "Novo Item";
-                    document.querySelectorAll('#product-modal input').forEach(i => i.value = '');
-                }, 300);
-            },
-
+            toggleG(h) { const c = h.nextElementSibling; c.style.display = (c.style.display === 'block') ? 'none' : 'block'; },
+            openProductModal() { document.getElementById('product-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('product-modal').classList.add('modal-active'), 10); },
+            closeProductModal() { document.getElementById('product-modal').classList.remove('modal-active'); setTimeout(() => { document.getElementById('product-modal').classList.add('hidden'); document.getElementById('edit-id').value = ''; }, 300); },
             showReceipt(venda, total, qtd) {
                 document.getElementById('rec-metodo').innerText = venda.metodo;
                 document.getElementById('rec-qtd').innerText = `${qtd} unidades`;
                 document.getElementById('rec-total').innerText = `R$ ${total.toFixed(2)}`;
-                document.getElementById('rec-list').innerHTML = venda.itens.map(it => `
-                    <div class="flex justify-between text-xs border-b border-zinc-900 pb-2">
-                        <span class="text-zinc-300 font-bold">${it.qV}x ${it.nome}</span>
-                        <span class="text-zinc-500 font-black italic">R$ ${(it.preco * it.qV).toFixed(2)}</span>
-                    </div>
-                `).join('');
-                const modal = document.getElementById('receipt-modal');
-                modal.classList.remove('hidden');
-                setTimeout(() => modal.classList.add('modal-active'), 10);
+                document.getElementById('rec-list').innerHTML = venda.itens.map(it => `<div class="flex justify-between text-xs border-b border-zinc-900 pb-2"><span class="text-zinc-300 font-bold">${it.qV}x ${it.nome}</span><span class="text-zinc-500 font-black italic">R$ ${(it.preco * it.qV).toFixed(2)}</span></div>`).join('');
+                document.getElementById('receipt-modal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('receipt-modal').classList.add('modal-active'), 10);
             },
-
-            closeReceipt() {
-                const modal = document.getElementById('receipt-modal');
-                modal.classList.remove('modal-active');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-            },
-
-            openEditPayModal(docId) {
-                document.getElementById('edit-pay-venda-id').value = docId;
-                const modal = document.getElementById('edit-pay-modal');
-                modal.classList.remove('hidden');
-                setTimeout(() => modal.classList.add('modal-active'), 10);
-            },
-
-            closeEditPayModal() {
-                const modal = document.getElementById('edit-pay-modal');
-                modal.classList.remove('modal-active');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-            }
+            closeReceipt() { document.getElementById('receipt-modal').classList.remove('modal-active'); setTimeout(() => document.getElementById('receipt-modal').classList.add('hidden'), 300); },
+            openEditPayModal(docId) { document.getElementById('edit-pay-venda-id').value = docId; document.getElementById('edit-pay-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('edit-pay-modal').classList.add('modal-active'), 10); },
+            closeEditPayModal() { document.getElementById('edit-pay-modal').classList.remove('modal-active'); setTimeout(() => document.getElementById('edit-pay-modal').classList.add('hidden'), 300); }
         };
 
         inventory.init();
