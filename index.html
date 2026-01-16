@@ -7,54 +7,124 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;900&display=swap');
-        :root { --gold: #d4af37; --bg-black: #050505; --danger: #ff4444; --success: #22c55e; }
-        body { background-color: var(--bg-black); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .font-luxury { font-family: 'Cinzel', serif; }
-        .gold-gradient { background: linear-gradient(to right, #d4af37, #f9e29c, #b8860b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .premium-card { 
-            background: #111; border: 1px solid #222; border-radius: 2rem; padding: 20px; 
-            cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; 
+
+        :root { 
+            --gold: #d4af37; 
+            --bg-black: #050505; 
         }
+
+        body { 
+            background-color: var(--bg-black); 
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        .font-luxury { font-family: 'Cinzel', serif; }
+
+        .gold-gradient { 
+            background: linear-gradient(to right, #d4af37, #f9e29c, #b8860b); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+
+        /* ANIMAÇÕES */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .7; transform: scale(1.05); }
+        }
+
+        .loader-ring {
+          display: inline-block;
+          position: relative;
+          width: 80px;
+          height: 80px;
+        }
+        .loader-ring div {
+          box-sizing: border-box;
+          display: block;
+          position: absolute;
+          width: 64px;
+          height: 64px;
+          margin: 8px;
+          border: 4px solid var(--gold);
+          border-radius: 50%;
+          animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+          border-color: var(--gold) transparent transparent transparent;
+        }
+        .loader-ring div:nth-child(1) { animation-delay: -0.45s; }
+        .loader-ring div:nth-child(2) { animation-delay: -0.3s; }
+        .loader-ring div:nth-child(3) { animation-delay: -0.15s; }
+
+        @keyframes loader-ring {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* TRANSIÇÕES */
+        .hidden-app-init { opacity: 0; pointer-events: none; }
+        .show-app { opacity: 1; pointer-events: auto; transition: opacity 1s ease-in; }
+        .fade-out { opacity: 0; pointer-events: none; transition: opacity 1s ease-out; }
+
+        /* UI COMPONENTS */
+        .premium-card { background: #111; border: 1px solid #222; border-radius: 2rem; padding: 20px; cursor: pointer; transition: 0.4s; position: relative; }
         .premium-card:hover { border-color: var(--gold); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1); }
         .img-container { height: 180px; display: flex; align-items: center; justify-content: center; background: radial-gradient(#222, #050505); border-radius: 1.5rem; margin-bottom: 15px; overflow: hidden; }
         .img-container img { max-height: 80%; transition: 0.5s; object-fit: contain; }
-        .premium-card:hover .img-container img { transform: scale(1.1); }
 
-        .modal-overlay { backdrop-filter: blur(12px); transition: 0.3s; background: rgba(0,0,0,0.8); z-index: 100; }
+        .modal-overlay { backdrop-filter: blur(12px); transition: 0.3s; background: rgba(0,0,0,0.8); z-index: 100; opacity: 0; pointer-events: none; }
+        .modal-overlay.modal-active { opacity: 1; pointer-events: auto; }
         .modal-content { transform: scale(0.9); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .modal-active .modal-content { transform: scale(1); }
 
         .tab-btn { padding: 12px 20px; border-radius: 14px; font-size: 10px; font-weight: 900; text-transform: uppercase; background: #111; border: 2px solid #222; color: #666; transition: 0.3s; white-space: nowrap; }
         .tab-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1a1a; }
-        
-        .search-input { background: #111; border: 1px solid #222; border-radius: 15px; padding: 12px 20px; color: white; width: 100%; outline: none; transition: 0.3s; }
-        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
 
-        .pay-btn { transition: 0.2s; }
-        .pay-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
-        .sub-pay-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #333; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #666; transition: 0.2s; background: #111; }
+        .search-input { background: #111; border: 1px solid #222; border-radius: 15px; padding: 12px 20px; color: white; width: 100%; outline: none; transition: 0.3s; }
+        .search-input:focus { border-color: var(--gold); }
+
+        .pay-btn.active, .type-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        .sub-pay-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #333; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #666; background: #111; }
         .sub-pay-btn.active { border-color: #fff; color: #fff; background: #333; }
 
         .gaveta { background: #0a0a0a; border: 1px solid #222; border-radius: 15px; margin-bottom: 10px; overflow: hidden; }
         .gaveta-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #111; }
         .gaveta-content { display: none; padding: 15px; border-top: 1px solid #222; }
-        
+
         .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
         .status-pendente { background: #facc15; color: #000; }
         .status-preparando { background: #3b82f6; color: #fff; }
         .status-entregue { background: #22c55e; color: #fff; }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="flex flex-col lg:flex-row min-h-screen">
+<body class="flex flex-col lg:flex-row min-h-screen bg-[#050505]">
 
-    <main class="flex-1 p-6 lg:p-12">
+    <div id="splash-screen" class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none select-none">
+            <img src="https://i.ibb.co/N2zRYC30/Chat-GPT-Image-16-de-jan-de-2026-16-05-15-removebg-preview.png" alt="Coruja Logo" class="w-[350px] md:w-[600px] h-auto object-contain">
+        </div>
+        
+        <div class="relative z-10 flex flex-col items-center">
+            <h1 class="text-6xl font-luxury gold-gradient tracking-tighter mb-10 animate-pulse text-center">
+                Adega Corujão
+            </h1>
+            <div class="loader-ring">
+                <div></div><div></div><div></div><div></div>
+            </div>
+        </div>
+    </div>
+
+    <main id="app-content" class="flex-1 p-6 lg:p-12 hidden-app-init">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
             <div>
                 <h1 class="text-5xl font-luxury gold-gradient tracking-tighter">Adega Corujão</h1>
@@ -105,11 +175,17 @@
         </div>
     </main>
 
-    <aside class="w-full lg:w-[450px] bg-[#080808] border-l border-zinc-900 flex flex-col p-10 sticky top-0 h-screen">
+    <aside id="app-aside" class="w-full lg:w-[450px] bg-[#080808] border-l border-zinc-900 flex flex-col p-10 sticky top-0 h-screen hidden-app-init">
         <h2 class="text-2xl font-luxury mb-8">Carrinho</h2>
         <div id="cart-items" class="flex-1 overflow-y-auto space-y-4"></div>
         
         <div class="mt-6 border-t border-zinc-900 pt-6">
+            <p class="text-[10px] font-black text-zinc-600 uppercase mb-3">Tipo de Venda</p>
+            <div class="flex gap-2 mb-4">
+                <button onclick="vendaSystem.setOrderType('BALCAO')" class="type-btn flex-1 p-3 rounded-xl border border-zinc-800 text-[10px] font-black uppercase active" id="type-BALCAO">Direta (Balcão)</button>
+                <button onclick="vendaSystem.setOrderType('PEDIDO')" class="type-btn flex-1 p-3 rounded-xl border border-zinc-800 text-[10px] font-black uppercase" id="type-PEDIDO">Pedido (Fila)</button>
+            </div>
+
             <p class="text-[10px] font-black text-zinc-600 uppercase mb-3">Forma de Pagamento</p>
             <div class="flex gap-2 mb-4">
                 <button onclick="vendaSystem.setPay('Pix')" class="pay-btn flex-1 p-3 rounded-xl border border-zinc-800 text-[10px] font-black uppercase active" id="pay-Pix">Pix</button>
@@ -128,7 +204,7 @@
                 <span class="text-zinc-500 font-bold uppercase text-xs">Total</span>
                 <span id="cart-total" class="text-4xl font-black text-white">R$ 0,00</span>
             </div>
-            <button onclick="vendaSystem.finalizar()" class="w-full bg-[#d4af37] text-black py-6 rounded-2xl font-black uppercase text-sm hover:bg-[#b8860b] transition shadow-[0_0_20px_rgba(212,175,55,0.2)]">Finalizar Venda</button>
+            <button id="btn-finalizar" onclick="vendaSystem.finalizar()" class="w-full bg-[#d4af37] text-black py-6 rounded-2xl font-black uppercase text-sm hover:bg-[#b8860b] transition shadow-[0_0_20px_rgba(212,175,55,0.2)]">Finalizar Venda</button>
         </div>
     </aside>
 
@@ -200,22 +276,8 @@
         </div>
     </div>
 
-    <div id="edit-pay-modal" class="fixed inset-0 hidden modal-overlay flex items-center justify-center p-4">
-        <div class="modal-content bg-[#111] border border-zinc-800 w-full max-w-sm rounded-[2rem] p-8">
-            <h2 class="text-xl font-luxury gold-gradient mb-6 text-center">Alterar Pagamento</h2>
-            <input type="hidden" id="edit-pay-venda-id">
-            <div class="space-y-3">
-                <button onclick="vendaSystem.updatePaymentMethod('Pix')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Pix</button>
-                <button onclick="vendaSystem.updatePaymentMethod('Dinheiro')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Dinheiro</button>
-                <button onclick="vendaSystem.updatePaymentMethod('Cartão (Débito)')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Cartão (Débito)</button>
-                <button onclick="vendaSystem.updatePaymentMethod('Cartão (Crédito)')" class="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase hover:border-[#d4af37]">Cartão (Crédito)</button>
-            </div>
-            <button onclick="ui.closeEditPayModal()" class="w-full mt-6 text-zinc-600 text-[10px] font-black uppercase tracking-widest">Cancelar</button>
-        </div>
-    </div>
-
     <script>
-        // Configuração Firebase (Sua configuração original mantida)
+        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyA_AFJL8gwdcidtisa8hoN7l6imJynCGFc",
             authDomain: "adega-corujao.firebaseapp.com",
@@ -224,41 +286,68 @@
             messagingSenderId: "618915929534",
             appId: "1:618915929534:web:ced1d5a46a9cc89bf3edef"
         };
-        
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        // GERENCIAMENTO DO SPLASH SCREEN - 5 SEGUNDOS
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                const main = document.getElementById('app-content');
+                const aside = document.getElementById('app-aside');
+
+                if(splash) {
+                    splash.classList.add('fade-out');
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                        if(main) {
+                            main.classList.remove('hidden-app-init');
+                            main.classList.add('show-app');
+                        }
+                        if(aside) {
+                            aside.classList.remove('hidden-app-init');
+                            aside.classList.add('show-app');
+                        }
+                    }, 1000);
+                }
+            }, 5000); 
+        });
 
         let currentFilter = "TUDO";
         let currentStatusFilter = "PENDENTE";
         let searchQuery = "";
         let selectedPay = "Pix";
         let selectedCardType = "";
+        let selectedOrderType = "BALCAO";
         let editMode = false;
 
         const inventory = {
             db: [],
             async init() {
                 db.collection("produtos").onSnapshot((snapshot) => {
-                    this.db = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                    this.db = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     this.render();
                 });
             },
             async saveProduct() {
-                const id = document.getElementById('edit-id').value;
-                const pVenda = parseFloat(document.getElementById('p-venda').value) || 0;
-                const desc = parseFloat(document.getElementById('p-desconto').value) || 0;
-                const data = {
-                    nome: document.getElementById('p-nome').value,
-                    cat: document.getElementById('p-cat').value,
-                    qtd: parseInt(document.getElementById('p-qtd').value) || 0,
-                    venda: pVenda,
-                    promo: pVenda - desc,
-                    temDesconto: desc > 0,
-                    imagem: document.getElementById('p-img').value || 'https://via.placeholder.com/150'
-                };
-                if(id) await db.collection("produtos").doc(id).update(data);
-                else await db.collection("produtos").add(data);
-                ui.closeProductModal();
+                try {
+                    const id = document.getElementById('edit-id').value;
+                    const pVenda = parseFloat(document.getElementById('p-venda').value) || 0;
+                    const desc = parseFloat(document.getElementById('p-desconto').value) || 0;
+                    const data = {
+                        nome: document.getElementById('p-nome').value,
+                        cat: document.getElementById('p-cat').value,
+                        qtd: parseInt(document.getElementById('p-qtd').value) || 0,
+                        venda: pVenda,
+                        promo: pVenda - desc,
+                        temDesconto: desc > 0,
+                        imagem: document.getElementById('p-img').value || 'https://via.placeholder.com/150'
+                    };
+                    if (id) await db.collection("produtos").doc(id).update(data);
+                    else await db.collection("produtos").add(data);
+                    ui.closeProductModal();
+                } catch (e) { alert("Erro ao salvar: " + e.message); }
             },
             toggleDeleteMode() {
                 editMode = !editMode;
@@ -267,9 +356,13 @@
                 btn.classList.toggle('bg-red-600', editMode);
                 btn.classList.toggle('text-white', editMode);
                 this.render();
+                vendaSystem.renderPedidos();
+                ui.renderHistory();
             },
             async apagar(id) {
-                if(confirm("Deseja deletar este item permanentemente?")) await db.collection("produtos").doc(id).delete();
+                if (confirm("Deseja deletar permanentemente?")) {
+                    await db.collection("produtos").doc(id).delete();
+                }
             },
             editItem(id) {
                 const p = this.db.find(x => x.id === id);
@@ -280,7 +373,6 @@
                 document.getElementById('p-venda').value = p.venda;
                 document.getElementById('p-desconto').value = p.temDesconto ? (p.venda - p.promo) : '';
                 document.getElementById('p-img').value = p.imagem;
-                document.getElementById('modal-title').innerText = "Editar Produto";
                 ui.openProductModal();
             },
             filter(cat) {
@@ -314,7 +406,6 @@
                                 <span class="text-2xl font-black ${item.temDesconto ? 'text-red-500' : 'gold-gradient'}">R$ ${(item.temDesconto ? item.promo : item.venda).toFixed(2)}</span>
                             </div>
                             <div class="text-right">
-                                <span class="block text-[8px] text-zinc-600 font-black uppercase">Estoque</span>
                                 <span class="text-xs font-bold ${item.qtd < 5 ? 'text-red-500 animate-pulse' : 'text-zinc-300'}">${item.qtd} UN</span>
                             </div>
                         </div>
@@ -326,133 +417,131 @@
         const vendaSystem = {
             carrinho: [],
             history: [],
-            
             async init() {
                 db.collection("vendas").orderBy("id", "desc").onSnapshot(snap => {
                     this.history = snap.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
                     this.renderPedidos();
-                    if(!document.getElementById('section-historico').classList.contains('hidden')) ui.renderHistory();
+                    ui.renderHistory();
                 });
             },
-
+            setOrderType(type) {
+                selectedOrderType = type;
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.id === `type-${type}`));
+            },
             setPay(m) {
                 selectedPay = m;
-                selectedCardType = ""; 
+                selectedCardType = "";
                 document.querySelectorAll('.pay-btn').forEach(b => b.classList.toggle('active', b.id === `pay-${m}`));
                 document.getElementById('card-selection').classList.toggle('hidden', m !== 'Cartão');
             },
-
             setCardSub(t) {
                 selectedCardType = t;
                 document.querySelectorAll('.sub-pay-btn').forEach(b => b.classList.toggle('active', b.id === `sub-${t}`));
             },
-
             adicionar(id) {
                 const p = inventory.db.find(x => x.id === id);
-                if(!p || p.qtd <= 0) return;
+                if (!p || p.qtd <= 0) return;
                 const itemNoCarrinho = this.carrinho.find(i => i.id === id);
-                if(itemNoCarrinho) { if(itemNoCarrinho.qV < p.qtd) itemNoCarrinho.qV++; }
-                else { this.carrinho.push({id: p.id, nome: p.nome, preco: p.temDesconto ? p.promo : p.venda, qV: 1}); }
+                if (itemNoCarrinho) { if (itemNoCarrinho.qV < p.qtd) itemNoCarrinho.qV++; }
+                else { this.carrinho.push({ id: p.id, nome: p.nome, preco: p.temDesconto ? p.promo : p.venda, qV: 1 }); }
                 this.renderCart();
             },
-
             remover(id) {
                 const item = this.carrinho.find(i => i.id === id);
-                if(item.qV > 1) item.qV--;
+                if (!item) return;
+                if (item.qV > 1) item.qV--;
                 else this.carrinho = this.carrinho.filter(i => i.id !== id);
                 this.renderCart();
             },
-
             renderCart() {
                 const cont = document.getElementById('cart-items');
                 let total = 0;
                 cont.innerHTML = this.carrinho.map(i => {
                     total += (i.preco * i.qV);
                     return `<div class="flex items-center gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
-                        <div class="flex-1"><p class="text-[10px] font-black uppercase text-white">${i.nome}</p><p class="text-[9px] text-zinc-500">R$ ${i.preco.toFixed(2)}</p></div>
+                        <div class="flex-1"><p class="text-[10px] font-black text-white uppercase">${i.nome}</p></div>
                         <div class="flex items-center gap-3">
                             <button onclick="vendaSystem.remover('${i.id}')" class="w-8 h-8 bg-zinc-800 rounded-lg">-</button>
-                            <span class="text-xs font-black w-4 text-center">${i.qV}</span>
+                            <span class="text-xs font-black">${i.qV}</span>
                             <button onclick="vendaSystem.adicionar('${i.id}')" class="w-8 h-8 bg-zinc-800 rounded-lg">+</button>
                         </div>
                     </div>`;
                 }).join('');
                 document.getElementById('cart-total').innerText = `R$ ${total.toFixed(2)}`;
             },
-
             async finalizar() {
-                if(this.carrinho.length === 0) return;
-                if(selectedPay === 'Cartão' && !selectedCardType) return alert("Escolha Débito ou Crédito!");
-
-                const agora = new Date();
-                const totalFinal = this.carrinho.reduce((a, b) => a + (b.preco * b.qV), 0);
-                const qtdTotal = this.carrinho.reduce((a, b) => a + b.qV, 0);
-                
-                const venda = {
-                    id: Date.now(),
-                    dia: agora.toLocaleDateString('pt-BR'),
-                    hora: agora.toLocaleTimeString('pt-BR'),
-                    metodo: selectedPay === 'Cartão' ? `Cartão (${selectedCardType})` : selectedPay,
-                    total: totalFinal,
-                    status: "PENDENTE",
-                    itens: [...this.carrinho]
-                };
-
-                await db.collection("vendas").add(venda);
-                for(const item of this.carrinho) {
-                    const ref = db.collection("produtos").doc(item.id);
-                    await db.runTransaction(async (t) => {
-                        const doc = await t.get(ref);
-                        t.update(ref, { qtd: doc.data().qtd - item.qV });
+                if (this.carrinho.length === 0) return;
+                if (selectedPay === 'Cartão' && !selectedCardType) return alert("Escolha Débito ou Crédito!");
+                const btn = document.getElementById('btn-finalizar');
+                btn.disabled = true;
+                btn.innerText = "PROCESSANDO...";
+                try {
+                    const agora = new Date();
+                    const totalFinal = this.carrinho.reduce((a, b) => a + (b.preco * b.qV), 0);
+                    const statusInicial = selectedOrderType === "PEDIDO" ? "PENDENTE" : "ENTREGUE";
+                    const vendaData = {
+                        id: Date.now(),
+                        dia: agora.toLocaleDateString('pt-BR'),
+                        hora: agora.toLocaleTimeString('pt-BR'),
+                        metodo: selectedPay === 'Cartão' ? `Cartão (${selectedCardType})` : selectedPay,
+                        total: totalFinal,
+                        status: statusInicial,
+                        tipo: selectedOrderType,
+                        itens: [...this.carrinho]
+                    };
+                    await db.runTransaction(async (transaction) => {
+                        const refs = this.carrinho.map(item => ({ ref: db.collection("produtos").doc(item.id), qV: item.qV }));
+                        const docs = await Promise.all(refs.map(r => transaction.get(r.ref)));
+                        docs.forEach((doc, idx) => {
+                            if (!doc.exists || doc.data().qtd < refs[idx].qV) throw "Estoque insuficiente.";
+                        });
+                        docs.forEach((doc, idx) => {
+                            transaction.update(refs[idx].ref, { qtd: doc.data().qtd - refs[idx].qV });
+                        });
+                        transaction.set(db.collection("vendas").doc(), vendaData);
                     });
-                }
-                ui.showReceipt(venda, totalFinal, qtdTotal);
-                this.carrinho = [];
-                this.renderCart();
-                this.setPay('Pix');
+                    ui.showReceipt(vendaData, totalFinal, this.carrinho.reduce((a, b) => a + b.qV, 0));
+                    this.carrinho = []; this.renderCart();
+                } catch (e) { alert("ERRO: " + e); }
+                finally { btn.disabled = false; btn.innerText = "Finalizar Venda"; }
             },
-
+            async cancelarVenda(docId) {
+                if (!confirm("Confirmar EXCLUSÃO? Estoque será devolvido.")) return;
+                try {
+                    const ref = db.collection("vendas").doc(docId);
+                    const doc = await ref.get();
+                    if (doc.exists) {
+                        for (const item of doc.data().itens) {
+                            const pRef = db.collection("produtos").doc(item.id);
+                            const pDoc = await pRef.get();
+                            if (pDoc.exists) await pRef.update({ qtd: pDoc.data().qtd + item.qV });
+                        }
+                        await ref.delete();
+                    }
+                } catch (e) { alert("Erro: " + e.message); }
+            },
             filterPedidos(status) {
                 currentStatusFilter = status;
-                document.querySelectorAll('#section-pedidos .tab-btn').forEach(b => {
-                    b.classList.toggle('active', b.id === `tab-p-${status.toLowerCase()}`);
-                });
+                document.querySelectorAll('#section-pedidos .tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-p-${status.toLowerCase()}`));
                 this.renderPedidos();
             },
-
-            async updateStatus(docId, novoStatus) {
-                await db.collection("vendas").doc(docId).update({ status: novoStatus });
-            },
-
+            async updateStatus(docId, novoStatus) { await db.collection("vendas").doc(docId).update({ status: novoStatus }); },
             renderPedidos() {
                 const grid = document.getElementById('pedidos-grid');
                 const filtrados = this.history.filter(v => v.status === currentStatusFilter);
-                
                 grid.innerHTML = filtrados.map(v => `
-                    <div class="bg-[#111] border border-zinc-800 p-6 rounded-[2rem]">
+                    <div class="bg-[#111] border border-zinc-800 p-6 rounded-[2rem] relative">
+                        ${editMode ? `<button onclick="vendaSystem.cancelarVenda('${v.docId}')" class="absolute -top-2 -right-2 bg-red-600 w-8 h-8 rounded-full z-10 flex items-center justify-center text-[10px] font-black">✕</button>` : ''}
                         <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-[10px] font-black text-zinc-500 uppercase">${v.hora} - ${v.metodo}</p>
-                                <h4 class="text-xl font-black text-white">Pedido #${String(v.id).slice(-4)}</h4>
-                            </div>
+                            <div><p class="text-[10px] font-black text-zinc-500 uppercase">${v.hora} - ${v.metodo}</p><h4 class="text-xl font-black text-white">Pedido #${String(v.id).slice(-4)}</h4></div>
                             <span class="status-badge status-${v.status.toLowerCase()}">${v.status}</span>
                         </div>
-                        <div class="space-y-2 mb-6">
-                            ${v.itens.map(it => `<p class="text-xs text-zinc-400 font-bold">${it.qV}x ${it.nome}</p>`).join('')}
-                        </div>
+                        <div class="space-y-2 mb-6">${v.itens.map(it => `<p class="text-xs text-zinc-400 font-bold">${it.qV}x ${it.nome}</p>`).join('')}</div>
                         <div class="flex gap-2">
-                            ${v.status === 'PENDENTE' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'PREPARANDO')" class="flex-1 bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase">Iniciar Preparo</button>` : ''}
-                            ${v.status === 'PREPARANDO' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'ENTREGUE')" class="flex-1 bg-green-600 py-3 rounded-xl text-[10px] font-black uppercase">Marcar como Entregue</button>` : ''}
-                            ${v.status === 'ENTREGUE' ? `<p class="text-[10px] text-zinc-600 font-black uppercase">Finalizado ✅</p>` : ''}
+                            ${v.status === 'PENDENTE' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'PREPARANDO')" class="flex-1 bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase">Preparar</button>` : ''}
+                            ${v.status === 'PREPARANDO' ? `<button onclick="vendaSystem.updateStatus('${v.docId}', 'ENTREGUE')" class="flex-1 bg-green-600 py-3 rounded-xl text-[10px] font-black uppercase">Entregar</button>` : ''}
                         </div>
-                    </div>
-                `).join('');
-            },
-
-            async updatePaymentMethod(novoMetodo) {
-                const docId = document.getElementById('edit-pay-venda-id').value;
-                await db.collection("vendas").doc(docId).update({ metodo: novoMetodo });
-                ui.closeEditPayModal();
+                    </div>`).join('');
             }
         };
 
@@ -461,33 +550,30 @@
                 document.getElementById('section-inventory').classList.toggle('hidden', t !== 'estoque');
                 document.getElementById('section-pedidos').classList.toggle('hidden', t !== 'pedidos');
                 document.getElementById('section-historico').classList.toggle('hidden', t !== 'historico');
-                
                 document.getElementById('btn-estoque').classList.toggle('border-b-4', t === 'estoque');
                 document.getElementById('btn-pedidos').classList.toggle('border-b-4', t === 'pedidos');
                 document.getElementById('btn-historico').classList.toggle('border-b-4', t === 'historico');
-                
-                if(t === 'historico') this.renderHistory();
-                if(t === 'pedidos') vendaSystem.renderPedidos();
+                if (t === 'historico') this.renderHistory();
+                if (t === 'pedidos') vendaSystem.renderPedidos();
             },
             renderHistory() {
-                const cont = document.getElementById('gavetas-container');
+                const cont = document.getElementById('gavetas-container'); if(!cont) return;
                 const grupos = {};
-                vendaSystem.history.forEach(v => { if(!grupos[v.dia]) grupos[v.dia] = []; grupos[v.dia].push(v); });
+                vendaSystem.history.forEach(v => { if (!grupos[v.dia]) grupos[v.dia] = []; grupos[v.dia].push(v); });
                 cont.innerHTML = Object.keys(grupos).map(dia => {
                     const vendas = grupos[dia];
-                    const totalDia = vendas.reduce((a, b) => a + b.total, 0);
                     return `<div class="gaveta">
                         <div class="gaveta-header" onclick="ui.toggleG(this)">
                             <span class="font-black text-sm uppercase">${dia}</span>
-                            <span class="text-[#d4af37] font-black">R$ ${totalDia.toFixed(2)}</span>
+                            <span class="text-[#d4af37] font-black">R$ ${vendas.reduce((a, b) => a + b.total, 0).toFixed(2)}</span>
                         </div>
                         <div class="gaveta-content space-y-3">
-                            ${vendas.map(v => `<div class="border-b border-zinc-900 pb-2">
+                            ${vendas.map(v => `<div class="border-b border-zinc-900 pb-2 relative">
+                                ${editMode ? `<button onclick="vendaSystem.cancelarVenda('${v.docId}')" class="absolute top-0 right-0 bg-red-600 w-6 h-6 rounded-full flex items-center justify-center text-[8px]">✕</button>` : ''}
                                 <div class="flex justify-between text-[10px] font-black mb-1">
-                                    <span class="text-zinc-500 uppercase">${v.hora} | <span class="text-white cursor-pointer" onclick="ui.openEditPayModal('${v.docId}')">${v.metodo} ✏️</span></span>
+                                    <span class="text-zinc-500 uppercase">${v.hora} | ${v.metodo}</span>
                                     <span class="text-[#d4af37]">R$ ${v.total.toFixed(2)}</span>
                                 </div>
-                                <div class="text-[9px] text-zinc-400 pl-2">${v.itens.map(it => `${it.qV}x ${it.nome}`).join(' | ')}</div>
                             </div>`).join('')}
                         </div>
                     </div>`;
@@ -496,17 +582,15 @@
             toggleG(h) { const c = h.nextElementSibling; c.style.display = (c.style.display === 'block') ? 'none' : 'block'; },
             openProductModal() { document.getElementById('product-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('product-modal').classList.add('modal-active'), 10); },
             closeProductModal() { document.getElementById('product-modal').classList.remove('modal-active'); setTimeout(() => { document.getElementById('product-modal').classList.add('hidden'); document.getElementById('edit-id').value = ''; }, 300); },
-            showReceipt(venda, total, qtd) {
-                document.getElementById('rec-metodo').innerText = venda.metodo;
-                document.getElementById('rec-qtd').innerText = `${qtd} unidades`;
-                document.getElementById('rec-total').innerText = `R$ ${total.toFixed(2)}`;
-                document.getElementById('rec-list').innerHTML = venda.itens.map(it => `<div class="flex justify-between text-xs border-b border-zinc-900 pb-2"><span class="text-zinc-300 font-bold">${it.qV}x ${it.nome}</span><span class="text-zinc-500 font-black italic">R$ ${(it.preco * it.qV).toFixed(2)}</span></div>`).join('');
+            showReceipt(v, t, q) {
+                document.getElementById('rec-metodo').innerText = v.metodo;
+                document.getElementById('rec-qtd').innerText = `${q} unidades`;
+                document.getElementById('rec-total').innerText = `R$ ${t.toFixed(2)}`;
+                document.getElementById('rec-list').innerHTML = v.itens.map(it => `<div class="flex justify-between text-xs border-b border-zinc-900 pb-2"><span>${it.qV}x ${it.nome}</span><span>R$ ${(it.preco * it.qV).toFixed(2)}</span></div>`).join('');
                 document.getElementById('receipt-modal').classList.remove('hidden');
                 setTimeout(() => document.getElementById('receipt-modal').classList.add('modal-active'), 10);
             },
-            closeReceipt() { document.getElementById('receipt-modal').classList.remove('modal-active'); setTimeout(() => document.getElementById('receipt-modal').classList.add('hidden'), 300); },
-            openEditPayModal(docId) { document.getElementById('edit-pay-venda-id').value = docId; document.getElementById('edit-pay-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('edit-pay-modal').classList.add('modal-active'), 10); },
-            closeEditPayModal() { document.getElementById('edit-pay-modal').classList.remove('modal-active'); setTimeout(() => document.getElementById('edit-pay-modal').classList.add('hidden'), 300); }
+            closeReceipt() { document.getElementById('receipt-modal').classList.remove('modal-active'); setTimeout(() => { document.getElementById('receipt-modal').classList.add('hidden'); }, 300); }
         };
 
         inventory.init();
